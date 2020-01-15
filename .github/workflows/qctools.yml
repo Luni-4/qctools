@@ -1,0 +1,103 @@
+name: qctools
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    runs-on: windows-latest
+
+    env:
+      MSYSTEM: MINGW64
+      MSYS2_PATH_TYPE: inherit
+
+    steps:
+    - uses: actions/checkout@v2.0.0
+      with:
+        fetch: 1
+
+    - name: Install Qt 5.12.6
+      uses: jurplel/install-qt-action@v2
+      with:
+          arch: win64_mingw73
+
+    - name: Install patch
+      run: |
+        $LINK="https://sourceforge.net/projects/gnuwin32/files/patch/2.5.9-7"
+        $PATCH_VERSION="patch-2.5.9-7-bin"
+        curl -LO "$LINK/$PATCH_VERSION.zip"
+        7z rn "$PATCH_VERSION.zip" "$PATCH_VERSION" "patch"
+        7z x "$PATCH_VERSION.zip"
+
+    - name: Install msys2
+      run: |
+        $LINK = "http://repo.msys2.org/distrib/msys2-x86_64-latest.tar.xz"
+        Invoke-WebRequest -OutFile msys2.tar.xz -Uri "$LINK"
+        7z x msys2.tar.xz
+        7z x -aoa -oC:/ msys2.tar
+        Remove-Item msys2.tar.xz, msys2.tar
+        echo "::add-path::C:/msys64/usr/bin"
+        echo "::add-path::C:/msys64/mingw64/bin"
+
+    - name: Initialize msys2
+      run: |
+        bash -lc "exit"
+
+    - name: Update msys2
+      run: |
+        pacman -Syyuu --needed --ask=20 --noconfirm
+
+    - name: Install build packages
+      run: |
+        pacman -S --needed --ask=20 --noconfirm make `
+                                                nasm `
+                                                pkg-config `
+                                                libtool `
+                                                mingw-w64-x86_64-gcc `
+                                                mingw-w64-x86_64-zlib `
+                                                mingw-w64-x86_64-crt-git `
+                                                mingw-w64-x86_64-binutils
+
+    - name: Download and configure qwt
+      run: |
+        git clone --depth 1 https://github.com/opencor/qwt ../qwt
+        bin/patch ../qwt/qwtconfig.pri script/qwt.patch
+        cd ../qwt
+        qmake -r
+
+    - name: Build qwt
+      run: |
+        cd ../qwt
+        mingw32-make -j4
+
+    - name: Download and configure FFmpeg
+      run: |
+        git clone --depth 1 https://github.com/FFmpeg/FFmpeg ../ffmpeg
+        cd ../ffmpeg
+        bash configure --enable-gpl `
+                       --enable-static `
+                       --disable-shared `
+                       --disable-autodetect `
+                       --disable-securetransport `
+                       --disable-videotoolbox `
+                       --disable-doc `
+                       --disable-ffplay `
+                       --disable-ffprobe `
+                       --disable-debug `
+                       --arch=x86_64 `
+                       --target-os=mingw32
+
+    - name: Build and install FFmpeg
+      run: |
+        cd ../ffmpeg
+        make -j4
+
+    - name: Configure QCTools
+      run: |
+        cd Project/QtCreator
+        qmake -r QCTools.pro
+
+    - name: Build QCTools
+      run: |
+        cd Project/QtCreator
+        mingw32-make -j4
