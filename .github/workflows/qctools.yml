@@ -1,0 +1,88 @@
+name: qctools
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    runs-on: windows-latest
+
+    env:
+      MSYSTEM: MINGW64
+      MSYS2_PATH_TYPE: inherit
+      CC: ccache gcc
+      CXX: ccache g++
+
+    steps:
+    - uses: actions/checkout@v2.0.0
+      with:
+        fetch: 1
+
+    - name: Install msys2
+      run: |
+        $LINK = "http://repo.msys2.org/distrib/msys2-x86_64-latest.tar.xz"
+        Invoke-WebRequest -OutFile msys2.tar.xz -Uri "$LINK"
+        7z x msys2.tar.xz
+        7z x -aoa -oC:/ msys2.tar
+        Remove-Item msys2.tar.xz, msys2.tar
+        echo "::add-path::C:/msys64/usr/bin"
+        echo "::add-path::C:/msys64/mingw64/bin"
+
+    - name: Cache ccache
+      id: cache-msys64
+      uses: 1480c1/cache@mabs
+      with:
+        path: C:\msys64\home\runneradmin\.ccache
+        key: ${{ runner.os }}-msys64
+
+    - name: Cache pacman packages
+      uses: 1480c1/cache@mabs
+      with:
+        path: C:\msys64\var\cache\pacman\pkg
+        key: ${{ runner.os }}-pacman
+
+    - name: Run msys2 for the first time
+      run: |
+        bash -lc "exit"
+
+    - name: Update msys2
+      run: |
+        pacman -Syyuu --needed --ask=20 --noconfirm
+
+    - name: Install packages
+      run: |
+        pacman -S --needed --ask=20 --noconfirm make `
+                                                nasm `
+                                                pkg-config `
+                                                libtool `
+                                                mingw-w64-x86_64-ccache `
+                                                mingw-w64-x86_64-gcc `
+                                                mingw-w64-x86_64-binutils
+
+    - name: Download and configure FFmpeg
+      run: |
+        git clone --depth 1 https://github.com/FFmpeg/FFmpeg
+        cd FFmpeg
+        bash configure --enable-gpl `
+                       --enable-static `
+                       --disable-shared `
+                       --disable-autodetect `
+                       --disable-securetransport `
+                       --disable-videotoolbox `
+                       --disable-doc `
+                       --disable-ffplay `
+                       --disable-ffprobe `
+                       --disable-debug `
+                       --arch=x86_64 `
+                       --target-os=mingw32 `
+                       --prefix=C:/
+
+    - name: Make FFmpeg
+      run: |
+        cd FFmpeg
+        make -j4 install
+
+    - name: Print ccache info and clean pacman
+      run: |
+        bash -c "ccache -s"
+        pacman -Sc --noconfirm
