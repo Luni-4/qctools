@@ -1,0 +1,36 @@
+--- qwtconfig.pri	2014-12-11 16:08:02.000000000 +0100
++++ qwtconfig-copy.pri	2020-01-15 22:12:04.390744836 +0100
+@@ -72,7 +72,7 @@
+ # it will be a static library.
+ ######################################################################
+ 
+-QWT_CONFIG           += QwtDll
++#QWT_CONFIG           += QwtDll
+ 
+ ######################################################################
+ # QwtPlot enables all classes, that are needed to use the QwtPlot 
+@@ -93,13 +93,13 @@
+ # export a plot to a SVG document
+ ######################################################################
+ 
+-QWT_CONFIG     += QwtSvg
++#QWT_CONFIG     += QwtSvg
+ 
+ ######################################################################
+ # If you want to use a OpenGL plot canvas
+ ######################################################################
+ 
+-QWT_CONFIG     += QwtOpenGL
++#QWT_CONFIG     += QwtOpenGL
+ 
+ ######################################################################
+ # You can use the MathML renderer of the Qt solutions package to 
+@@ -118,7 +118,7 @@
+ # Otherwise you have to build it from the designer directory.
+ ######################################################################
+ 
+-QWT_CONFIG     += QwtDesigner
++#QWT_CONFIG     += QwtDesigner
+ 
+ ######################################################################
+ # Compile all Qwt classes into the designer plugin instead
