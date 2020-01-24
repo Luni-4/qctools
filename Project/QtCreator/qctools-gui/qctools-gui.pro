@@ -197,8 +197,9 @@ macx:contains(DEFINES, USE_BREW) {
     }
     include( $${QWT_ROOT}/qwtfunctions.pri )
 
-    !win32 {
-            LIBS      += -L$${QWT_ROOT}/lib -lqwt
+    unix {
+            macx:LIBS       += -F$${QWT_ROOT}/lib -framework qwt
+            !macx:LIBS      += -L$${QWT_ROOT}/lib -lqwt
     }
 
     win32 {
@@ -216,8 +217,8 @@ INCLUDEPATH += $$SOURCES_PATH
 INCLUDEPATH += $$SOURCES_PATH/ThirdParty/cqmarkdown
 include(../ffmpeg.pri)
 
-!win32 {
-    LIBS += -lz
+win32 {
+    LIBS += -lz -lbcrypt -lwsock32 -lws2_32
 }
 
 !win32 {
@@ -225,13 +226,13 @@ include(../ffmpeg.pri)
 }
 
 unix {
-    LIBS       += -ldl
+    LIBS       += -lz -ldl
     !macx:LIBS += -lrt
 }
 
 macx:ICON = $$SOURCES_PATH/Resource/Logo.icns
 macx:LIBS += -liconv \
-	     -framework CoreFoundation \
+             -framework CoreFoundation \
              -framework Foundation \
              -framework AppKit \
              -framework AudioToolBox \
