@@ -1,0 +1,35 @@
+name: qctools
+
+on: [push, pull_request]
+
+jobs:
+
+  build-windows-mingw:
+
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v2.0.0
+      with:
+        fetch: 1
+
+    - name: Extract Qtbase
+      run: |
+        curl -LO "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt5_5126/qt.qt5.5126.win64_mingw73/5.12.6-0-201911111120qtbase-Windows-Windows_10-Mingw73-Windows-Windows_10-X86_64.7z"
+        7z x 5.12.6-0-201911111120qtbase-Windows-Windows_10-Mingw73-Windows-Windows_10-X86_64.7z
+
+    - name: Extract Qt3d
+      run: |
+        curl -LO "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt5_5126/qt.qt5.5126.win64_mingw73/5.12.6-0-201911111120qt3d-Windows-Windows_10-Mingw73-Windows-Windows_10-X86_64.7z"
+        7z x 5.12.6-0-201911111120qt3d-Windows-Windows_10-Mingw73-Windows-Windows_10-X86_64.7z
+
+
+#    - name: Install aqt
+#      run: |
+#        python -m pip install --upgrade pip
+#        pip3 install setuptools wheel
+#        pip3 install aqtinstall==0.7.*
+#
+#    - name: Install Qt 5.12.6
+#      run: |
+#        python -m aqt install -O . 5.12.6 windows desktop win64_mingw73 -m ""
